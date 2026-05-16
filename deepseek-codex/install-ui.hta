@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>deepseek-codex 安装程序</title>
+<HTA:APPLICATION
+  ID="Installer"
+  APPLICATIONNAME="deepseek-codex"
+  BORDER="dialog"
+  CAPTION="yes"
+  SHOWINTASKBAR="yes"
+  WINDOWSTATE="normal"
+  MAXIMIZEBUTTON="no"
+  MINIMIZEBUTTON="no"
+  SYSMENU="yes"
+  SINGLEINSTANCE="yes"
+/>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; }
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f5f5f5;
+  color: #1a1a2e;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.container { width: 400px; }
+.logo { text-align: center; margin-bottom: 8px; }
+.logo img { width: 48px; height: 48px; border-radius: 10px; object-fit: cover; }
+.header { text-align: center; margin-bottom: 16px; }
+.header h1 { font-size: 18px; font-weight: 700; }
+.header p { font-size: 12px; color: #666; margin-top: 4px; }
+.section {
+  background: #fff; border-radius: 8px; padding: 14px 16px;
+  margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.section-title {
+  font-size: 12px; font-weight: 600; color: #333;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 4px;
+}
+.section-title .num {
+  display: inline-flex; width: 18px; height: 18px;
+  background: #1a1a2e; color: #fff; border-radius: 50%;
+  align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; margin-right: 4px;
+}
+input[type="text"] {
+  width: 100%; padding: 8px 10px; border: 1.5px solid #ddd;
+  border-radius: 6px; font-size: 12px; outline: none;
+}
+input[type="text"]:focus { border-color: #1a1a2e; }
+.hint { font-size: 11px; color: #999; margin-top: 4px; text-align: center; }
+.model-options { display: flex; gap: 8px; }
+.model-card {
+  flex: 1; border: 1.5px solid #ddd; border-radius: 6px;
+  padding: 10px; cursor: pointer; text-align: center;
+  transition: all 0.2s;
+}
+.model-card:hover { border-color: #aaa; }
+.model-card.selected { border-color: #1a1a2e; background: #f0f0f8; }
+.model-card input { display: none; }
+.model-name { font-size: 13px; font-weight: 600; }
+.model-desc { font-size: 11px; color: #888; margin-top: 2px; }
+.shortcut-row { text-align: center; margin-top: 8px; font-size: 12px; cursor: pointer; }
+.status-box {
+  background: #f8f8f8; border-radius: 6px; padding: 8px 10px;
+  font-size: 12px; color: #555; min-height: 34px; line-height: 1.5;
+  font-family: Consolas, monospace; text-align: center;
+}
+.status-box.success { color: #2e7d32; }
+.status-box.error { color: #c62828; }
+.btn {
+  display: block; width: 80%; margin: 0 auto;
+  padding: 10px; border: none; border-radius: 6px;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: background 0.2s;
+}
+.btn-install { background: #1a1a2e; color: #fff; }
+.btn-install:hover { background: #2d2d5e; }
+.btn-install:disabled { background: #aaa; cursor: not-allowed; }
+.btn-uninstall { background: #c62828; color: #fff; }
+.btn-uninstall:hover { background: #e53935; }
+.footer { text-align: center; margin-top: 10px; }
+.footer a {
+  font-size: 12px; color: #888; cursor: pointer;
+  text-decoration: none; margin: 0 8px;
+}
+.footer a:hover { color: #333; text-decoration: underline; }
+.footer .sep { color: #ddd; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div class="header">
+  <h1>deepseek-codex 安装程序</h1>
+  <p>安装后在任何 cmd 输入 codex.cmd 即可运行</p>
+</div>
+
+<div class="section">
+  <div class="section-title"><span class="num">1</span>DeepSeek API 密钥</div>
+  <input type="text" id="apiKey" placeholder="sk-..." />
+  <div class="hint">获取密钥: platform.deepseek.com/api_keys</div>
+</div>
+
+<div class="section">
+  <div class="section-title" style="justify-content:center"><span class="num">2</span>选择模型</div>
+  <div class="model-options">
+    <div class="model-card selected" id="modelPro" onclick="selectModel('pro')">
+      <input type="radio" name="model" value="deepseek-v4-pro" checked>
+      <div class="model-name">DeepSeek V4 Pro</div>
+      <div class="model-desc">旗舰模型 · 强推理 · 1M 上下文</div>
+    </div>
+    <div class="model-card" id="modelFlash" onclick="selectModel('flash')">
+      <input type="radio" name="model" value="deepseek-v4-flash">
+      <div class="model-name">DeepSeek V4 Flash</div>
+      <div class="model-desc">轻量快速 · 低延迟 · 1M 上下文</div>
+    </div>
+  </div>
+  <div class="shortcut-row">
+    <label><input type="checkbox" id="createShortcut" checked style="width:16px;height:16px;cursor:pointer;vertical-align:middle"> 创建桌面快捷方式</label>
+  </div>
+  <div class="shortcut-row" style="margin-top:4px">
+    <label><input type="checkbox" id="autoStart" checked style="width:16px;height:16px;cursor:pointer;vertical-align:middle"> 开机自动启动代理</label>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title" style="justify-content:center"><span class="num">3</span>安装状态</div>
+  <div class="status-box" id="status">就绪，点击下方按钮开始安装</div>
+</div>
+
+<button class="btn btn-install" id="btnInstall" onclick="install()">开始安装</button>
+
+<div class="footer">
+  <a onclick="showInstallHelp()">安装说明</a>
+  <span class="sep">|</span>
+  <a onclick="uninstall()" style="color:#c62828">卸载</a>
+</div>
+
+<script>
+var shell = new ActiveXObject("WScript.Shell");
+var fso = new ActiveXObject("Scripting.FileSystemObject");
+var envProc = shell.Environment("PROCESS");
+var envUser = shell.Environment("USER");
+
+var INSTALL_DIR = envProc("USERPROFILE") + "\\deepseek-codex";
+
+function writeLog(msg) {
+  try {
+    if (!fso.FolderExists(INSTALL_DIR)) return;
+    var logFile = INSTALL_DIR + "\\install.log";
+    var ts = new Date().toLocaleString();
+    var stream = fso.OpenTextFile(logFile, 8, true);
+    stream.WriteLine("[" + ts + "] " + msg);
+    stream.Close();
+  } catch(e) {}
+}
+
+function getNodeVersion() {
+  try {
+    var shell2 = new ActiveXObject("WScript.Shell");
+    var exec = shell2.Exec("cmd /c node -v");
+    var output = exec.StdOut.ReadAll();
+    var match = output.match(/v(\d+)\./);
+    if (match) return parseInt(match[1]);
+    return 0;
+  } catch(e) { return 0; }
+}
+
+function selectModel(type) {
+  document.getElementById("modelPro").className = "model-card";
+  document.getElementById("modelFlash").className = "model-card";
+  var el = type === "pro" ? "modelPro" : "modelFlash";
+  document.getElementById(el).className = "model-card selected";
+  document.getElementById(el).getElementsByTagName("input")[0].checked = true;
+}
+
+function log(msg, type) {
+  var el = document.getElementById("status");
+  el.innerHTML = msg;
+  el.className = "status-box" + (type ? " " + type : "");
+}
+
+function getModelId() {
+  var radios = document.getElementsByName("model");
+  for (var i = 0; i < radios.length; i++) {
+    if (radios[i].checked) return radios[i].value;
+  }
+  return "deepseek-v4-pro";
+}
+
+function addToPath(dir) {
+  var currentPath = envUser("PATH");
+  if (currentPath.indexOf(dir) !== -1) return false;
+  envUser("PATH") = dir + ";" + currentPath;
+  return true;
+}
+
+function removeFromPath(dir) {
+  var currentPath = envUser("PATH");
+  var parts = currentPath.split(";");
+  var newParts = [];
+  var found = false;
+  for (var i = 0; i < parts.length; i++) {
+    if (parts[i].toLowerCase() === dir.toLowerCase()) {
+      found = true;
+    } else {
+      newParts.push(parts[i]);
+    }
+  }
+  if (found) {
+    envUser("PATH") = newParts.join(";");
+  }
+  return found;
+}
+
+function showInstallHelp() {
+  alert(
+    "使用说明：\n\n" +
+    "1. 粘贴你的 DeepSeek API 密钥\n" +
+    "2. 选择模型（Pro / Flash）\n" +
+    "3. 点击「开始安装」\n\n" +
+    "安装程序会先验证 API 密钥有效性，通过后才开始安装。\n\n" +
+    "安装完成后：\n" +
+    "  - 重新打开 cmd\n" +
+    "  - 输入 codex.cmd 即可运行\n\n" +
+    "如需卸载，点击底部的「卸载」"
+  );
+}
+
+function validateKey(apiKey) {
+  try {
+    var xhr = new ActiveXObject("MSXML2.XMLHTTP");
+    xhr.open("GET", "https://api.deepseek.com/v1/models", false);
+    xhr.setRequestHeader("Authorization", "Bearer " + apiKey);
+    xhr.setRequestHeader("Accept", "application/json");
+    xhr.send();
+    if (xhr.status === 200) {
+      return { ok: true };
+    } else if (xhr.status === 401 || xhr.status === 403) {
+      return { ok: false, msg: "API 密钥无效（状态 " + xhr.status + "），请检查密钥是否正确" };
+    } else {
+      return { ok: false, msg: "API 返回异常状态 " + xhr.status + "，请检查网络连接" };
+    }
+  } catch(e) {
+    return { ok: false, msg: "无法连接到 DeepSeek API，请检查网络: " + e.message };
+  }
+}
+
+function install() {
+  var apiKey = document.getElementById("apiKey").value.trim();
+  if (!apiKey || !apiKey.startsWith("sk-")) {
+    log("请输入有效的 API 密钥（以 sk- 开头）", "error");
+    return;
+  }
+
+  var btn = document.getElementById("btnInstall");
+  btn.disabled = true;
+
+  log("正在验证 API 密钥...");
+  var result = validateKey(apiKey);
+  if (!result.ok) {
+    log(result.msg, "error");
+    btn.disabled = false;
+    btn.textContent = "开始安装";
+    return;
+  }
+
+  btn.textContent = "安装中...";
+
+  try {
+    writeLog("开始安装");
+    log("复制文件...");
+    var srcDir = fso.GetParentFolderName(location.pathname);
+    if (!fso.FolderExists(INSTALL_DIR)) {
+      fso.CreateFolder(INSTALL_DIR);
+      fso.CreateFolder(INSTALL_DIR + "\\proxy");
+      fso.CreateFolder(INSTALL_DIR + "\\models");
+    }
+    function cp(s, d) {
+      try {
+        if (!fso.FileExists(s)) throw new Error("源文件不存在: " + s);
+        fso.CopyFile(s, d, true);
+      } catch(e) {
+        throw new Error("复制文件失败: " + e.message);
+      }
+    }
+    cp(srcDir + "\\codex.cmd", INSTALL_DIR + "\\codex.cmd");
+    cp(srcDir + "\\proxy\\proxy.mjs", INSTALL_DIR + "\\proxy\\proxy.mjs");
+    cp(srcDir + "\\models\\deepseek.json", INSTALL_DIR + "\\models\\deepseek.json");
+    cp(srcDir + "\\settings.hta", INSTALL_DIR + "\\settings.hta");
+
+    log("检查 Node.js...");
+    writeLog("检查 Node.js...");
+    if (shell.Run("cmd /c where node >nul 2>&1", 0, true) !== 0) {
+      writeLog("Node.js 未安装");
+      log("Node.js 未安装，无法继续", "error");
+      alert(
+        "未检测到 Node.js！\n\n" +
+        "Codex CLI 和协议代理都需要 Node.js 运行环境。\n\n" +
+        "下载安装步骤：\n" +
+        "1. 打开 https://nodejs.org/ 或 https://nodejs.cn/\n" +
+        "2. 下载左侧 LTS（长期支持版）\n" +
+        "3. 运行安装程序，一路点「下一步」即可\n" +
+        "4. 安装完成后重启本安装程序\n\n" +
+        "官网: https://nodejs.org/\n" +
+        "中文镜像（更快）: https://nodejs.cn/"
+      );
+      btn.disabled = false; btn.textContent = "开始安装"; return;
+    }
+    var nodeVer = getNodeVersion();
+    writeLog("Node.js 版本: v" + nodeVer);
+    if (nodeVer < 18) {
+      writeLog("Node.js 版本过低，需要 v18+");
+      log("Node.js 版本过低（v" + nodeVer + "），需要 v18 以上", "error");
+      alert(
+        "Node.js 版本过低！\n\n" +
+        "当前版本: v" + nodeVer + "\n" +
+        "需要版本: v18 或更高\n\n" +
+        "请到 https://nodejs.org/ 下载最新 LTS 版安装。"
+      );
+      btn.disabled = false; btn.textContent = "开始安装"; return;
+    }
+
+    log("检查 Codex CLI...");
+    if (shell.Run("cmd /c where codex >nul 2>&1", 0, true) !== 0) {
+      writeLog("Codex CLI 未安装，开始自动安装");
+      log("正在安装 Codex CLI（国内镜像）...");
+      var npmOk = false;
+      if (shell.Run("cmd /c npm install -g @openai/codex --registry=https://registry.npmmirror.com 2>&1", 0, true) === 0) {
+        npmOk = true;
+        writeLog("Codex CLI 通过 npmmirror 安装成功");
+      }
+      if (!npmOk) {
+        writeLog("npmmirror 安装失败，尝试官方源");
+        log("镜像源失败，尝试官方源安装...");
+        if (shell.Run("cmd /c npm install -g @openai/codex 2>&1", 0, true) === 0) {
+          npmOk = true;
+          writeLog("Codex CLI 通过官方源安装成功");
+        }
+      }
+      if (!npmOk || shell.Run("cmd /c where codex >nul 2>&1", 0, true) !== 0) {
+        writeLog("Codex CLI 安装失败");
+        log("Codex CLI 安装失败，请手动运行: npm install -g @openai/codex", "error");
+        btn.disabled = false; btn.textContent = "开始安装"; return;
+      }
+      log("Codex CLI 安装成功");
+    } else {
+      writeLog("Codex CLI 已安装");
+      log("Codex CLI 已安装");
+    }
+
+    log("写入 API 密钥...");
+    writeLog("写入 API 密钥到 .env");
+    var es = fso.CreateTextFile(INSTALL_DIR + "\\.env", true);
+    es.WriteLine("CODEX_API_KEY=" + apiKey);
+    es.Close();
+
+    log("配置 Codex CLI...");
+    writeLog("配置 Codex CLI config.toml");
+    var codexDir = envProc("USERPROFILE") + "\\.codex";
+    if (!fso.FolderExists(codexDir)) fso.CreateFolder(codexDir);
+    var configFile = codexDir + "\\config.toml";
+    var modelId = getModelId();
+    var configText = '# Codex CLI -> DeepSeek (via proxy)\n';
+    configText += 'model = "' + modelId + '"\n';
+    configText += 'model_provider = "deepseek-proxy"\n';
+    configText += 'disable_response_storage = true\n\n';
+    configText += '[model_providers.deepseek-proxy]\n';
+    configText += 'name = "DeepSeek (via proxy)"\n';
+    configText += 'base_url = "http://127.0.0.1:17890/v1"\n';
+    configText += 'env_key = "CODEX_API_KEY"\n';
+    configText += 'wire_api = "responses"\n\n';
+    configText += '[windows]\n';
+    configText += 'sandbox = "elevated"\n';
+
+    if (fso.FileExists(configFile)) {
+      var oldCfg = fso.OpenTextFile(configFile, 1).ReadAll();
+      if (oldCfg.indexOf("deepseek-proxy") !== -1) {
+        oldCfg = oldCfg.replace(/^model = ".*"$/m, 'model = "' + modelId + '"');
+        configText = oldCfg;
+      } else {
+        configText = oldCfg + "\n\n" + configText;
+      }
+    }
+    var cs = fso.CreateTextFile(configFile, true);
+    cs.Write(configText); cs.Close();
+
+    log("加入系统 PATH...");
+    writeLog("加入系统 PATH");
+    addToPath(INSTALL_DIR);
+
+    var shortcutCreated = false;
+    if (document.getElementById("createShortcut").checked) {
+      log("创建桌面快捷方式...");
+      writeLog("创建桌面快捷方式");
+      var desktopPath = envProc("USERPROFILE") + "\\Desktop";
+      var sc = fso.CreateTextFile(desktopPath + "\\codex-deepseek.cmd", true);
+      sc.WriteLine("@echo off");
+      sc.WriteLine("cd /d " + INSTALL_DIR);
+      sc.WriteLine("start \"Codex\" cmd /k \"codex.cmd\"");
+      sc.Close();
+      fso.CopyFile(INSTALL_DIR + "\\settings.hta", desktopPath + "\\settings.hta", true);
+      shortcutCreated = true;
+    }
+
+    var autoStartEnabled = false;
+    if (document.getElementById("autoStart").checked) {
+      log("设置开机自启...");
+      writeLog("设置开机自启");
+      var vbs = fso.CreateTextFile(INSTALL_DIR + "\\start-proxy.vbs", true);
+      vbs.WriteLine("Set ws = CreateObject(\"WScript.Shell\")");
+      vbs.WriteLine("ws.CurrentDirectory = \"" + INSTALL_DIR + "\"");
+      vbs.WriteLine('ws.Run "node.exe ""' + INSTALL_DIR + '\\proxy\\proxy.mjs""", 0, False');
+      vbs.Close();
+      try { shell.RegWrite(
+        "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\deepseek-codex-proxy",
+        "wscript.exe \"" + INSTALL_DIR + "\\start-proxy.vbs\"",
+        "REG_SZ"
+      ); } catch(e) {}
+      autoStartEnabled = true;
+    }
+
+    log("安装成功！模型: " + (modelId === "deepseek-v4-pro" ? "DeepSeek V4 Pro" : "DeepSeek V4 Flash"), "success");
+    btn.textContent = "✓ 安装完成";
+
+    var msg = "安装完成！\n\n";
+    msg += "模型: " + (modelId === "deepseek-v4-pro" ? "DeepSeek V4 Pro" : "DeepSeek V4 Flash") + "\n";
+    msg += "位置: " + INSTALL_DIR + "\n";
+    msg += "已在 PATH 中添加（需重新打开 cmd）\n";
+    if (shortcutCreated) msg += "桌面已创建快捷方式\n";
+    if (autoStartEnabled) msg += "已设置开机自动启动代理\n";
+    msg += "\n在任何 cmd 中输入 codex.cmd 即可运行！";
+    alert(msg);
+
+  } catch(e) {
+    writeLog("安装出错: " + e.message);
+    log("安装出错: " + e.message + "（详情见 install.log）", "error");
+    btn.disabled = false; btn.textContent = "开始安装";
+  }
+}
+
+function uninstall() {
+  var confirmMsg =
+    "确认卸载 deepseek-codex？\n\n" +
+    "将执行以下操作：\n" +
+    "  1. 删除 " + INSTALL_DIR + "\n" +
+    "  2. 从 PATH 中移除\n" +
+    "  3. 删除桌面快捷方式\n" +
+    "  4. 移除开机自启\n" +
+    "  5. （可选）清理 Codex CLI 配置\n\n" +
+    "是否继续？";
+
+  if (!confirm(confirmMsg)) return;
+
+  var btn = document.getElementById("btnInstall");
+  btn.disabled = true;
+  var originalText = btn.textContent;
+  btn.textContent = "卸载中...";
+
+  try {
+    writeLog("开始卸载");
+    shell.Run("@for /f \"tokens=5\" %a in ('netstat -ano ^| findstr \":17890 \"') do @taskkill /F /PID %a >nul 2>&1", 0, true);
+
+    log("删除安装文件...");
+    if (fso.FolderExists(INSTALL_DIR)) {
+      var folder = fso.GetFolder(INSTALL_DIR);
+      if (folder.Attributes & 1) folder.Attributes = folder.Attributes - 1;
+      fso.DeleteFolder(INSTALL_DIR, true);
+    }
+
+    log("清理 PATH...");
+    removeFromPath(INSTALL_DIR);
+
+    log("删除桌面快捷方式...");
+    var desktopPath = envProc("USERPROFILE") + "\\Desktop";
+    var shortcutPath = desktopPath + "\\codex-deepseek.cmd";
+    if (fso.FileExists(shortcutPath)) fso.DeleteFile(shortcutPath);
+    var switchShortcut = desktopPath + "\\settings.hta";
+    if (fso.FileExists(switchShortcut)) fso.DeleteFile(switchShortcut);
+
+    log("移除开机自启...");
+    try { shell.RegDelete("HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\deepseek-codex-proxy"); } catch(e) {}
+
+    var configFile = envProc("USERPROFILE") + "\\.codex\\config.toml";
+    if (fso.FileExists(configFile)) {
+      var cfg = fso.OpenTextFile(configFile, 1).ReadAll();
+      if (cfg.indexOf("deepseek-proxy") !== -1) {
+        if (confirm("是否也从 Codex CLI 配置中移除 DeepSeek 相关设置？\n\n（文件: " + configFile + "）")) {
+          var lines = cfg.split("\n");
+          var newLines = [];
+          var skip = false;
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i].trim();
+            if (line === '# Codex CLI -> DeepSeek (via proxy)' ||
+                (line.indexOf('deepseek-proxy') !== -1 && line.indexOf('[') === 0)) {
+              skip = true;
+            }
+            if (!skip) {
+              newLines.push(lines[i]);
+            } else {
+              if (line === "" || line.indexOf('[') === 0) {
+                if (line.indexOf('deepseek-proxy') === -1 && line !== '# Codex CLI -> DeepSeek (via proxy)') {
+                  skip = false;
+                  if (line !== "") newLines.push(lines[i]);
+                }
+              }
+            }
+          }
+          var cs = fso.CreateTextFile(configFile, true);
+          cs.Write(newLines.join("\n")); cs.Close();
+          log("已清理 Codex CLI 配置", "success");
+        }
+      }
+    }
+
+    writeLog("卸载完成");
+    log("卸载完成", "success");
+    btn.textContent = "卸载完成";
+    alert("卸载完成！\n\n已删除所有 deepseek-codex 相关文件。");
+
+  } catch(e) {
+    writeLog("卸载出错: " + e.message);
+    log("卸载出错: " + e.message, "error");
+  }
+  btn.disabled = false;
+  if (btn.textContent === "卸载中...") btn.textContent = originalText;
+}
+</script>
+</div>
+
+</body>
+</html>
